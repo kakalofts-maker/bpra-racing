@@ -41,4 +41,464 @@
         .row { display: flex; gap: 10px; flex-wrap: wrap; }
         .row .form-group { flex: 1; min-width: 180px; }
 
-        button.btn-main { background: var(--secondary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; border-
+        button.btn-main { background: var(--secondary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        button.btn-main:hover { opacity: 0.9; }
+
+        .map-tools { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .map-tools input { flex: 1; min-width: 150px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+        .map-tools button { padding: 8px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+        
+        #map { height: 300px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ccc; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.85rem; }
+        table th, table td { border: 1px solid #bdc3c7; padding: 7px 5px; text-align: center; }
+        table th { background-color: var(--primary); color: white; font-size: 0.8rem; }
+        table tr:nth-child(even) { background-color: #f2f9f4; }
+        
+        .pos-top { background-color: #d4edda !important; font-weight: bold; }
+        .btn-del { background: #d9534f; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.75rem; }
+
+        @media print {
+            nav, .admin-only, .btn-print-hide, .btn-del-col { display: none !important; }
+            body { background: white; }
+            .card { box-shadow: none; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="logo.jpg" alt="BPRA Logo" onerror="this.src='https://via.placeholder.com/75?text=BPRA'">
+    <div class="title-area">
+        <h1>Balochistan Racing Pigeon Association</h1>
+        <p>Mach Bolan, Balochistan, Pakistan</p>
+    </div>
+</header>
+
+<nav>
+    <button id="btn-results" class="active" onclick="switchTab('results')">🏆 Tournament Results</button>
+    <button id="btn-admin" onclick="switchTab('admin')">🔒 Owner Gmail Login</button>
+    <button id="btn-install" class="install-btn" onclick="installApp()">📱 App Install کریں</button>
+</nav>
+
+<div class="container">
+
+    <!-- PUBLIC RESULTS TAB -->
+    <div id="tab-results" class="card">
+        <div class="race-header" id="race-title-banner">Race Results (Meters/Min Speed)</div>
+        
+        <div class="row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Tournament Year (سال):</label>
+                <select id="filter-year" onchange="loadResults()">
+                    <option value="2026-27">2026-27</option>
+                    <option value="2025-26" selected>2025-26</option>
+                    <option value="2024-25">2024-25</option>
+                    <option value="2023-24">2023-24</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Match / Race (میچ):</label>
+                <select id="filter-match" onchange="loadResults()">
+                    <option value="First Race">First Race</option>
+                    <option value="Second Race">Second Race</option>
+                    <option value="Third Race">Third Race</option>
+                    <option value="Fourth Race">Fourth Race</option>
+                    <option value="Final Race">Final Race</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="race-subinfo">
+            <span id="lbl-date">Date: N/A</span>
+            <span id="lbl-lib-time">Time of Liberation: N/A</span>
+        </div>
+
+        <div style="margin-bottom: 10px; text-align: right;" class="btn-print-hide">
+            <button onclick="window.print()" style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🖨️ Print Results / PDF</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>S.N</th>
+                        <th>Fancier's Name</th>
+                        <th>Arrival Time</th>
+                        <th>Distance</th>
+                        <th>Speed (m/min)</th>
+                        <th>Position</th>
+                        <th class="btn-del-col admin-only-field" style="display:none;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic Data -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL TAB -->
+    <div id="tab-admin" class="card" style="display: none;">
+        <h2>🔒 Owner Gmail Login Panel</h2>
+        <br>
+        <!-- Gmail Login Form -->
+        <div id="admin-login">
+            <div class="form-group">
+                <label>Gmail ID (ای میل ایڈریس):</label>
+                <input type="email" id="admin-email" placeholder="kakaloft@gmail.com">
+            </div>
+            <div class="form-group">
+                <label>Password (پاسورڈ):</label>
+                <input type="password" id="admin-pass" placeholder="Enter password">
+            </div>
+            <button class="btn-main" onclick="loginAdmin()">Login with Gmail</button>
+            <p style="font-size: 0.75rem; color: #666; margin-top: 8px; text-align: center;">نوٹ: صرف آپ کی درج کردہ جی میل (kakaloft@gmail.com) اور پاسورڈ (123123kaka) سے ہی لاگ ان ہوگا۔</p>
+        </div>
+
+        <!-- Add Record Form -->
+        <div id="admin-form" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="color: var(--secondary);">Add New Pigeon Record</h3>
+                <button onclick="logoutAdmin()" style="padding: 5px 10px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+            </div>
+            <br>
+            <div class="row">
+                <div class="form-group">
+                    <label>Fancier's Name (Owner):</label>
+                    <input type="text" id="owner_name" required placeholder="e.g. Mir JK Badini">
+                </div>
+                <div class="form-group">
+                    <label>Tournament Year (سال):</label>
+                    <select id="year">
+                        <option value="2026-27">2026-27</option>
+                        <option value="2025-26" selected>2025-26</option>
+                        <option value="2024-25">2024-25</option>
+                        <option value="2023-24">2023-24</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Match Name (میچ):</label>
+                    <select id="match_name">
+                        <option value="First Race">First Race</option>
+                        <option value="Second Race">Second Race</option>
+                        <option value="Third Race">Third Race</option>
+                        <option value="Fourth Race">Fourth Race</option>
+                        <option value="Final Race">Final Race</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Race Date (تاریخ کیلنڈر):</label>
+                    <input type="date" id="race_date">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Time of Liberation (HH:MM:SS):</label>
+                    <input type="time" id="release_time" value="09:45:00" step="1" onchange="calculateSpeedLive()">
+                </div>
+                <div class="form-group">
+                    <label>Arrival Time (HH:MM:SS):</label>
+                    <input type="time" id="arrival_time" step="1" onchange="calculateSpeedLive()">
+                </div>
+            </div>
+
+            <!-- Satellite Map & GPS Section -->
+            <div class="form-group">
+                <label>GPS Location Map (Satellite View):</label>
+                <div class="map-tools">
+                    <input type="text" id="map-search-input" placeholder="Search location (e.g. Quetta, Mach)...">
+                    <button type="button" onclick="searchLocation()">🔍 Search</button>
+                    <button type="button" onclick="getCurrentGPS()" style="background: #28a745;">📍 My Location</button>
+                </div>
+                <div id="map"></div>
+                <div class="row">
+                    <input type="text" id="release_loc" placeholder="Release Point (Click 1st)" readonly>
+                    <input type="text" id="arrival_loc" placeholder="Arrival Point (Click 2nd)" readonly>
+                </div>
+                <br>
+                <input type="number" id="distance_km" placeholder="Distance in KM (Auto-calculated)" step="0.01" onchange="calculateSpeedLive()" style="font-weight: bold; background: #eef;">
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Calculated Speed (Meters/Min):</label>
+                    <input type="text" id="preview_speed" placeholder="Auto-calculated" readonly style="font-weight: bold; color: var(--secondary);">
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="saveRecord()">Save & Rank Pigeon Record</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let db = JSON.parse(localStorage.getItem('bpra_records_v8')) || [
+        { id: 1, owner: "Mir JK Badini", arrTime: "11:34:07", dist: 127.33, speed: 1166.923, year: "2025-26", match: "First Race", relTime: "09:45:00", date: "2025-12-24" },
+        { id: 2, owner: "Siddiq Mengal", arrTime: "11:30:17", dist: 122.80, speed: 1166.380, year: "2025-26", match: "First Race", relTime: "09:45:00", date: "2025-12-24" }
+    ];
+    
+    let map, relMarker, arrMarker;
+    let relCoords = null, arrCoords = null;
+    let streetLayer, satelliteLayer;
+    let isAdminLoggedIn = sessionStorage.getItem('bpra_admin_auth') === 'true';
+
+    const OWNER_GMAIL = "kakaloft@gmail.com";
+    const OWNER_PASS = "123123kaka";
+
+    window.onload = function() {
+        let dateInput = document.getElementById('race_date');
+        if(dateInput) dateInput.valueAsDate = new Date();
+        if(isAdminLoggedIn) {
+            showAdminUI();
+        }
+        loadResults();
+    }
+
+    function showAdminUI() {
+        let loginDiv = document.getElementById('admin-login');
+        let formDiv = document.getElementById('admin-form');
+        if(loginDiv) loginDiv.style.display = 'none';
+        if(formDiv) formDiv.style.display = 'block';
+        document.querySelectorAll('.admin-only-field').forEach(el => el.style.display = 'table-cell');
+    }
+
+    function initMap() {
+        if(map) return;
+        
+        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+
+        map = L.map('map', {
+            center: [29.8637, 67.3323],
+            zoom: 12,
+            layers: [satelliteLayer]
+        });
+
+        L.control.layers({ "🛰️ Satellite View (HD)": satelliteLayer, "🗺️ Street Map": streetLayer }).addTo(map);
+
+        map.on('click', function(e) {
+            if (!relCoords) {
+                relCoords = e.latlng;
+                relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(5)}, ${relCoords.lng.toFixed(5)}`;
+            } else if (!arrCoords) {
+                arrCoords = e.latlng;
+                arrMarker = L.marker(arrCoords).addTo(map).bindPopup("Arrival Point").openPopup();
+                document.getElementById('arrival_loc').value = `${arrCoords.lat.toFixed(5)}, ${arrCoords.lng.toFixed(5)}`;
+                calcDistance();
+            } else {
+                map.removeLayer(relMarker);
+                map.removeLayer(arrMarker);
+                relCoords = e.latlng;
+                arrCoords = null;
+                relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(5)}, ${relCoords.lng.toFixed(5)}`;
+                document.getElementById('arrival_loc').value = "";
+                document.getElementById('distance_km').value = "";
+            }
+        });
+    }
+
+    function searchLocation() {
+        let query = document.getElementById('map-search-input').value;
+        if (!query) { alert("تلاش کرنے کے لیے جگہ کا نام لکھیں!"); return; }
+        
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 14);
+                } else {
+                    alert("مطلوبہ جگہ نہیں مل سکی۔");
+                }
+            });
+    }
+
+    function getCurrentGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+                map.setView([lat, lng], 16);
+                L.popup().setLatLng([lat, lng]).setContent("📍 آپ کی موجودہ لوکیشن").openOn(map);
+            }, () => { alert("GPS کی اجازت درکار ہے۔"); });
+        }
+    }
+
+    function calcDistance() {
+        if (relCoords && arrCoords) {
+            let R = 6371; 
+            let dLat = (arrCoords.lat - relCoords.lat) * Math.PI / 180;
+            let dLon = (arrCoords.lng - relCoords.lng) * Math.PI / 180;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(relCoords.lat * Math.PI / 180) * Math.cos(arrCoords.lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            let d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            document.getElementById('distance_km').value = d.toFixed(2);
+            calculateSpeedLive();
+        }
+    }
+
+    function calculateSpeedLive() {
+        let rel = document.getElementById('release_time').value;
+        let arr = document.getElementById('arrival_time').value;
+        let dist = parseFloat(document.getElementById('distance_km').value);
+
+        if (rel && arr && dist) {
+            let t1 = new Date("1970-01-01T" + rel + "Z");
+            let t2 = new Date("1970-01-01T" + arr + "Z");
+            let diffMs = t2 - t1;
+            if (diffMs < 0) diffMs += 24 * 3600 * 1000;
+
+            let totalMinutes = diffMs / (1000 * 60);
+            let speedMpm = (dist * 1000) / totalMinutes;
+            document.getElementById('preview_speed').value = speedMpm.toFixed(3);
+        }
+    }
+
+    function switchTab(tab) {
+        document.getElementById('tab-results').style.display = tab === 'results' ? 'block' : 'none';
+        document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+        document.getElementById('btn-results').className = tab === 'results' ? 'active' : '';
+        document.getElementById('btn-admin').className = tab === 'admin' ? 'active' : '';
+        if(tab === 'admin' && isAdminLoggedIn) {
+            setTimeout(() => { initMap(); map.invalidateSize(); }, 200);
+        }
+    }
+
+    function loginAdmin() {
+        let inputEmail = document.getElementById('admin-email').value.trim();
+        let inputPass = document.getElementById('admin-pass').value.trim();
+
+        if(inputEmail === OWNER_GMAIL && inputPass === OWNER_PASS) {
+            isAdminLoggedIn = true;
+            sessionStorage.setItem('bpra_admin_auth', 'true');
+            showAdminUI();
+            setTimeout(() => { initMap(); map.invalidateSize(); }, 300);
+            loadResults();
+        } else {
+            alert("غلط جی میل آئی ڈی یا پاسورڈ! (kakaloft@gmail.com اور 123123kaka درج کریں)");
+        }
+    }
+
+    function logoutAdmin() {
+        isAdminLoggedIn = false;
+        sessionStorage.removeItem('bpra_admin_auth');
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-form').style.display = 'none';
+        document.querySelectorAll('.admin-only-field').forEach(el => el.style.display = 'none');
+        document.getElementById('admin-email').value = '';
+        document.getElementById('admin-pass').value = '';
+        loadResults();
+    }
+
+    function saveRecord() {
+        let owner = document.getElementById('owner_name').value;
+        let dist = parseFloat(document.getElementById('distance_km').value);
+        let arrTime = document.getElementById('arrival_time').value;
+        let relTime = document.getElementById('release_time').value;
+        let year = document.getElementById('year').value;
+        let match = document.getElementById('match_name').value;
+        let date = document.getElementById('race_date').value;
+        let speed = parseFloat(document.getElementById('preview_speed').value);
+
+        if(!owner || !dist || !arrTime || !speed || !date) {
+            alert("براہ کرم تمام خانے، تاریخ اور میپ لوکیشن مکمل کریں!");
+            return;
+        }
+
+        let newId = Date.now();
+        db.push({ id: newId, owner, dist, arrTime, relTime, year, match, date, speed });
+        localStorage.setItem('bpra_records_v8', JSON.stringify(db));
+        alert("ریکارڈ کامیابی کے ساتھ محفوظ ہو گیا!");
+        
+        let ownerInput = document.getElementById('owner_name');
+        if(ownerInput) ownerInput.value = '';
+        loadResults();
+        switchTab('results');
+    }
+
+    function deleteRecord(id) {
+        if(confirm("کیا آپ واقعی اس اینٹری کو ڈیلیٹ کرنا چاہتے ہیں؟")) {
+            db = db.filter(item => item.id !== id);
+            localStorage.setItem('bpra_records_v8', JSON.stringify(db));
+            loadResults();
+        }
+    }
+
+    function loadResults() {
+        let selYear = document.getElementById('filter-year').value;
+        let selMatch = document.getElementById('filter-match').value;
+        let tbody = document.querySelector('#results-table tbody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+
+        let filtered = db.filter(item => item.year === selYear && item.match === selMatch);
+        filtered.sort((a, b) => b.speed - a.speed);
+
+        let lblDate = document.getElementById('lbl-date');
+        let lblLibTime = document.getElementById('lbl-lib-time');
+
+        if(filtered.length > 0) {
+            if(lblDate) lblDate.innerText = "Date: " + (filtered[0].date || 'N/A');
+            if(lblLibTime) lblLibTime.innerText = "Time of Liberation: " + (filtered[0].relTime || 'N/A');
+        } else {
+            if(lblDate) lblDate.innerText = "Date: N/A";
+            if(lblLibTime) lblLibTime.innerText = "Time of Liberation: N/A";
+            tbody.innerHTML = `<tr><td colspan="${isAdminLoggedIn ? 7 : 6}" style="padding:15px; color:#777;">اس میچ کا کوئی ریکارڈ موجود نہیں ہے۔</td></tr>`;
+            return;
+        }
+
+        filtered.forEach((item, index) => {
+            let posClass = index < 10 ? 'pos-top' : '';
+            let posText = (index + 1);
+            if(index === 0) posText = '1ˢᵗ';
+            else if(index === 1) posText = '2ⁿᵈ';
+            else if(index === 2) posText = '3ʳᵈ';
+            else if(index < 10) posText = (index + 1) + 'ᵗʰ';
+
+            let delBtnHtml = isAdminLoggedIn ? `<td class="admin-only-field"><button class="btn-del" onclick="deleteRecord(${item.id})">🗑️ Delete</button></td>` : '';
+
+            let row = `<tr class="${posClass}">
+                <td><b>${index + 1}</b></td>
+                <td style="text-align:left; padding-left:8px;"><b>${item.owner}</b></td>
+                <td>${item.arrTime}</td>
+                <td>${item.dist.toFixed(2)}</td>
+                <td><b>${item.speed.toFixed(3)}</b></td>
+                <td><b>${posText}</b></td>
+                ${delBtnHtml}
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // PWA Install Prompt Logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        let installBtn = document.getElementById('btn-install');
+        if(installBtn) installBtn.style.display = 'inline-block';
+    });
+
+    function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    let installBtn = document.getElementById('btn-install');
+                    if(installBtn) installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+</script>
+</body>
+</html>
