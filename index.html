@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary: #1a4a72;
+            --primary: #003366;
             --secondary: #2e8b57;
             --accent: #d9534f;
             --bg: #f4f7f6;
@@ -18,39 +18,44 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding-bottom: 30px; }
         
-        header { background: var(--primary); color: white; text-align: center; padding: 20px 15px; }
-        header h1 { font-size: 1.5rem; margin-bottom: 5px; }
-        header p { font-size: 0.9rem; opacity: 0.9; }
+        header { background: var(--primary); color: white; text-align: center; padding: 15px; border-bottom: 4px solid #cc9900; display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        header img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #cc9900; object-fit: cover; }
+        header .title-area h1 { font-size: 1.3rem; margin-bottom: 3px; }
+        header .title-area p { font-size: 0.85rem; opacity: 0.9; }
 
-        nav { background: #11324d; padding: 10px; text-align: center; }
-        nav button { background: none; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 0 5px; }
+        nav { background: #11324d; padding: 10px; text-align: center; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        nav button { background: none; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
         nav button.active { background: white; color: var(--primary); font-weight: bold; }
+        .install-btn { background: #28a745 !important; border-color: #28a745 !important; font-weight: bold; display: none; }
 
-        .container { max-width: 900px; margin: 15px auto; padding: 0 10px; }
+        .container { max-width: 950px; margin: 15px auto; padding: 0 10px; }
         .card { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .card h2 { color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--bg); padding-bottom: 8px; margin-bottom: 12px; }
+        
+        .race-header { background: #cc0000; color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 4px; margin-bottom: 10px; font-size: 0.95rem; }
+        .race-subinfo { display: flex; justify-content: space-between; background: #eef2f7; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px; color: var(--primary); flex-wrap: wrap; gap: 5px; }
 
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.9rem; }
         
-        .row { display: flex; gap: 10px; }
-        .row .form-group { flex: 1; }
+        .row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .row .form-group { flex: 1; min-width: 200px; }
 
         button.btn-main { background: var(--secondary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; border-radius: 5px; font-weight: bold; cursor: pointer; }
         button.btn-main:hover { opacity: 0.9; }
 
-        #map { height: 250px; border-radius: 5px; margin-bottom: 10px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        table th { background-color: var(--primary); color: white; }
-        table tr:nth-child(even) { background-color: #f9f9f9; }
+        .map-tools { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .map-tools input { flex: 1; min-width: 150px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+        .map-tools button { padding: 8px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
         
-        .rank-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-weight: bold; color: white; }
-        .rank-1 { background-color: #ffd700; color: #000; }
-        .rank-2 { background-color: #c0c0c0; color: #000; }
-        .rank-3 { background-color: #cd7f32; color: #fff; }
+        #map { height: 300px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ccc; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.85rem; }
+        table th, table td { border: 1px solid #bdc3c7; padding: 7px 5px; text-align: center; }
+        table th { background-color: var(--primary); color: white; font-size: 0.8rem; }
+        table tr:nth-child(even) { background-color: #f2f9f4; }
+        
+        .pos-top { background-color: #d4edda !important; font-weight: bold; }
 
         @media print {
             nav, .admin-only, .btn-print-hide { display: none !important; }
@@ -62,45 +67,58 @@
 <body>
 
 <header>
-    <h1>Balochistan Racing Pigeon Association (BPRA)</h1>
-    <p>Mach Bolan, Balochistan, Pakistan</p>
+    <img src="1000035859.jpg" alt="BPRA Logo">
+    <div class="title-area">
+        <h1>Balochistan Racing Pigeon Association</h1>
+        <p>Mach Bolan, Balochistan, Pakistan</p>
+    </div>
 </header>
 
 <nav>
-    <button id="btn-results" class="active" onclick="switchTab('results')">Tournament Results</button>
-    <button id="btn-admin" onclick="switchTab('admin')">Admin Panel</button>
+    <button id="btn-results" class="active" onclick="switchTab('results')">🏆 Tournament Results</button>
+    <button id="btn-admin" onclick="switchTab('admin')">🔒 Admin Login</button>
+    <button id="btn-install" class="install-btn" onclick="installApp()">📱 App Install کریں</button>
 </nav>
 
 <div class="container">
 
     <!-- PUBLIC RESULTS TAB -->
     <div id="tab-results" class="card">
-        <h2>🏆 Tournament Results</h2>
-        <div class="row">
-            <div class="form-group">
-                <label>Select Tournament Year:</label>
-                <select id="filter-year" onchange="loadResults()"><option value="2026">2026</option></select>
+        <div class="race-header" id="race-title-banner">First Race Result (Meters/Min Speed)</div>
+        
+        <div class="row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Tournament Year:</label>
+                <select id="filter-year" onchange="loadResults()"><option value="2025-26">2025-26</option></select>
             </div>
-            <div class="form-group">
-                <label>Select Match:</label>
-                <select id="filter-match" onchange="loadResults()"><option value="Match 1">Match 1</option></select>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Match / Race:</label>
+                <select id="filter-match" onchange="loadResults()">
+                    <option value="First Race">First Race</option>
+                    <option value="Second Race">Second Race</option>
+                </select>
             </div>
         </div>
 
+        <div class="race-subinfo">
+            <span id="lbl-date">Date: 24-12-2025</span>
+            <span id="lbl-lib-time">Time of Liberation: 09:45:00</span>
+        </div>
+
         <div style="margin-bottom: 10px; text-align: right;" class="btn-print-hide">
-            <button onclick="window.print()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">🖨️ Print Results / Save PDF</button>
+            <button onclick="window.print()" style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🖨️ Print Results / PDF</button>
         </div>
 
         <div style="overflow-x: auto;">
             <table id="results-table">
                 <thead>
                     <tr>
-                        <th>Rank</th>
-                        <th>Ring No</th>
-                        <th>Owner & Club</th>
+                        <th>S.N</th>
+                        <th>Fancier's Name</th>
+                        <th>Arrival Time</th>
                         <th>Distance</th>
-                        <th>Flying Time</th>
                         <th>Speed (m/min)</th>
+                        <th>Position</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,79 +130,76 @@
 
     <!-- ADMIN PANEL TAB -->
     <div id="tab-admin" class="card" style="display: none;">
-        <h2>🔒 Admin Entry Panel</h2>
-        
+        <h2>🔒 Admin Entry Panel (صرف اونر کے لیے)</h2>
+        <br>
         <!-- Login Form -->
         <div id="admin-login">
             <div class="form-group">
                 <label>Admin Password:</label>
-                <input type="password" id="admin-pass" placeholder="Enter Admin Password (Default: admin123)">
+                <input type="password" id="admin-pass" placeholder="Enter Password (admin123)">
             </div>
-            <button class="btn-main" onclick="loginAdmin()">Login</button>
+            <button class="btn-main" onclick="loginAdmin()">Login as Owner</button>
         </div>
 
-        <!-- Add Record Form (Hidden by default) -->
+        <!-- Add Record Form (Hidden until logged in) -->
         <div id="admin-form" style="display: none;">
-            <h3>Add New Pigeon Record</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="color: var(--secondary);">Add New Pigeon Record</h3>
+                <button onclick="logoutAdmin()" style="padding: 5px 10px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+            </div>
             <br>
             <div class="row">
                 <div class="form-group">
-                    <label>Ring Number:</label>
-                    <input type="text" id="ring_no" required>
-                </div>
-                <div class="form-group">
-                    <label>Owner Name:</label>
-                    <input type="text" id="owner_name" required>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="form-group">
-                    <label>Club Name:</label>
-                    <input type="text" id="club_name" value="BPRA Mach Bolan">
+                    <label>Fancier's Name (Owner):</label>
+                    <input type="text" id="owner_name" required placeholder="e.g. Mir JK Badini">
                 </div>
                 <div class="form-group">
                     <label>Tournament Year:</label>
-                    <input type="number" id="year" value="2026">
+                    <input type="text" id="year" value="2025-26">
                 </div>
             </div>
 
-            <!-- Map GPS Section -->
+            <div class="row">
+                <div class="form-group">
+                    <label>Match Name:</label>
+                    <input type="text" id="match_name" value="First Race">
+                </div>
+                <div class="form-group">
+                    <label>Time of Liberation (HH:MM:SS):</label>
+                    <input type="time" id="release_time" value="09:45:00" step="1" onchange="calculateSpeedLive()">
+                </div>
+            </div>
+
+            <!-- Satellite Map & GPS Section -->
             <div class="form-group">
-                <label>GPS Distance Calculation (Select Locations on Map):</label>
+                <label>GPS Location Map (Satellite View):</label>
+                <div class="map-tools">
+                    <input type="text" id="map-search-input" placeholder="Search location (e.g. Quetta, Mach)...">
+                    <button type="button" onclick="searchLocation()">🔍 Search</button>
+                    <button type="button" onclick="getCurrentGPS()" style="background: #28a745;">📍 My Location</button>
+                </div>
                 <div id="map"></div>
                 <div class="row">
-                    <input type="text" id="release_loc" placeholder="Release Point" readonly>
-                    <input type="text" id="arrival_loc" placeholder="Arrival Point" readonly>
+                    <input type="text" id="release_loc" placeholder="Release Point (Click 1st)" readonly>
+                    <input type="text" id="arrival_loc" placeholder="Arrival Point (Click 2nd)" readonly>
                 </div>
                 <br>
-                <input type="number" id="distance_km" placeholder="Distance in KM (Auto-calculated)" step="0.01" readonly style="font-weight: bold; background: #eef;">
+                <input type="number" id="distance_km" placeholder="Distance in KM (Auto-calculated)" step="0.01" onchange="calculateSpeedLive()" style="font-weight: bold; background: #eef;">
             </div>
 
-            <!-- Flying Time Section -->
-            <div class="row">
-                <div class="form-group">
-                    <label>Release Time (HH:MM:SS):</label>
-                    <input type="time" id="release_time" step="1" onchange="calculateSpeed()">
-                </div>
-                <div class="form-group">
-                    <label>Arrival Time (HH:MM:SS):</label>
-                    <input type="time" id="arrival_time" step="1" onchange="calculateSpeed()">
-                </div>
+            <div class="form-group">
+                <label>Arrival Time (HH:MM:SS):</label>
+                <input type="time" id="arrival_time" step="1" onchange="calculateSpeedLive()">
             </div>
 
             <div class="row">
                 <div class="form-group">
-                    <label>Total Flying Time:</label>
-                    <input type="text" id="flying_time" placeholder="Auto-calculated" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Speed (Meter / Min):</label>
-                    <input type="text" id="speed_mpm" placeholder="Auto-calculated" readonly style="font-weight: bold; color: var(--secondary);">
+                    <label>Calculated Speed (Meters/Min):</label>
+                    <input type="text" id="preview_speed" placeholder="Auto-calculated" readonly style="font-weight: bold; color: var(--secondary);">
                 </div>
             </div>
 
-            <button class="btn-main" onclick="saveRecord()">Save Pigeon Record</button>
+            <button class="btn-main" onclick="saveRecord()">Save & Rank Pigeon Record</button>
         </div>
     </div>
 
@@ -193,26 +208,49 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let db = JSON.parse(localStorage.getItem('bpra_records')) || [];
+    let db = JSON.parse(localStorage.getItem('bpra_records_v5')) || [
+        { owner: "Mir JK Badini", arrTime: "11:34:07", dist: 127.33, speed: 1166.923, year: "2025-26", match: "First Race", relTime: "09:45:00" },
+        { owner: "Siddiq Mengal", arrTime: "11:30:17", dist: 122.80, speed: 1166.380, year: "2025-26", match: "First Race", relTime: "09:45:00" },
+        { owner: "Mir Mehrdil Khan", arrTime: "11:33:05", dist: 125.83, speed: 1164.197, year: "2025-26", match: "First Race", relTime: "09:45:00" }
+    ];
+    
     let map, relMarker, arrMarker;
     let relCoords = null, arrCoords = null;
+    let streetLayer, satelliteLayer;
+    let isAdminLoggedIn = sessionStorage.getItem('bpra_admin_auth') === 'true';
+
+    // Check login state on load
+    window.onload = function() {
+        if(isAdminLoggedIn) {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-form').style.display = 'block';
+        }
+        loadResults();
+    }
 
     function initMap() {
-        // Default Center: Mach, Bolan, Balochistan
-        map = L.map('map').setView([29.8637, 67.3323], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        if(map) return;
+        
+        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+
+        map = L.map('map', {
+            center: [29.8637, 67.3323], // Mach, Bolan default
+            zoom: 12,
+            layers: [satelliteLayer]
+        });
+
+        L.control.layers({ "🛰️ Satellite View (HD)": satelliteLayer, "🗺️ Street Map": streetLayer }).addTo(map);
 
         map.on('click', function(e) {
             if (!relCoords) {
                 relCoords = e.latlng;
                 relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
-                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(4)}, ${relCoords.lng.toFixed(4)}`;
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(5)}, ${relCoords.lng.toFixed(5)}`;
             } else if (!arrCoords) {
                 arrCoords = e.latlng;
                 arrMarker = L.marker(arrCoords).addTo(map).bindPopup("Arrival Point").openPopup();
-                document.getElementById('arrival_loc').value = `${arrCoords.lat.toFixed(4)}, ${arrCoords.lng.toFixed(4)}`;
+                document.getElementById('arrival_loc').value = `${arrCoords.lat.toFixed(5)}, ${arrCoords.lng.toFixed(5)}`;
                 calcDistance();
             } else {
                 map.removeLayer(relMarker);
@@ -220,29 +258,52 @@
                 relCoords = e.latlng;
                 arrCoords = null;
                 relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
-                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(4)}, ${relCoords.lng.toFixed(4)}`;
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(5)}, ${relCoords.lng.toFixed(5)}`;
                 document.getElementById('arrival_loc').value = "";
                 document.getElementById('distance_km').value = "";
             }
         });
     }
 
-    function calcDistance() {
-        if (relCoords && arrCoords) {
-            let R = 6371; // Radius of Earth in KM
-            let dLat = (arrCoords.lat - relCoords.lat) * Math.PI / 180;
-            let dLon = (arrCoords.lng - relCoords.lng) * Math.PI / 180;
-            let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(relCoords.lat * Math.PI / 180) * Math.cos(arrCoords.lat * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            let d = R * c;
-            document.getElementById('distance_km').value = d.toFixed(2);
-            calculateSpeed();
+    function searchLocation() {
+        let query = document.getElementById('map-search-input').value;
+        if (!query) { alert("تلاش کرنے کے لیے جگہ کا نام لکھیں!"); return; }
+        
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 14);
+                } else {
+                    alert("مطلوبہ جگہ نہیں مل سکی۔");
+                }
+            });
+    }
+
+    function getCurrentGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+                map.setView([lat, lng], 16);
+                L.popup().setLatLng([lat, lng]).setContent("📍 آپ کی موجودہ لوکیشن").openOn(map);
+            }, () => { alert("GPS کی اجازت درکار ہے۔"); });
         }
     }
 
-    function calculateSpeed() {
+    function calcDistance() {
+        if (relCoords && arrCoords) {
+            let R = 6371; 
+            let dLat = (arrCoords.lat - relCoords.lat) * Math.PI / 180;
+            let dLon = (arrCoords.lng - relCoords.lng) * Math.PI / 180;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(relCoords.lat * Math.PI / 180) * Math.cos(arrCoords.lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            let d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            document.getElementById('distance_km').value = d.toFixed(2);
+            calculateSpeedLive();
+        }
+    }
+
+    function calculateSpeedLive() {
         let rel = document.getElementById('release_time').value;
         let arr = document.getElementById('arrival_time').value;
         let dist = parseFloat(document.getElementById('distance_km').value);
@@ -251,19 +312,11 @@
             let t1 = new Date("1970-01-01T" + rel + "Z");
             let t2 = new Date("1970-01-01T" + arr + "Z");
             let diffMs = t2 - t1;
-            
-            if (diffMs < 0) diffMs += 24 * 3600 * 1000; // Overday flight
+            if (diffMs < 0) diffMs += 24 * 3600 * 1000;
 
             let totalMinutes = diffMs / (1000 * 60);
-            let hours = Math.floor(totalMinutes / 60);
-            let minutes = Math.floor(totalMinutes % 60);
-            let seconds = Math.floor((diffMs / 1000) % 60);
-
-            document.getElementById('flying_time').value = `${hours}h ${minutes}m ${seconds}s`;
-
-            // Speed in Meters per Minute
             let speedMpm = (dist * 1000) / totalMinutes;
-            document.getElementById('speed_mpm').value = speedMpm.toFixed(2);
+            document.getElementById('preview_speed').value = speedMpm.toFixed(3);
         }
     }
 
@@ -272,67 +325,104 @@
         document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
         document.getElementById('btn-results').className = tab === 'results' ? 'active' : '';
         document.getElementById('btn-admin').className = tab === 'admin' ? 'active' : '';
-        if(tab === 'admin' && !map) setTimeout(initMap, 300);
+        if(tab === 'admin' && isAdminLoggedIn) setTimeout(() => { initMap(); map.invalidateSize(); }, 200);
     }
 
     function loginAdmin() {
         let pass = document.getElementById('admin-pass').value;
         if(pass === "admin123") {
+            isAdminLoggedIn = true;
+            sessionStorage.setItem('bpra_admin_auth', 'true');
             document.getElementById('admin-login').style.display = 'none';
             document.getElementById('admin-form').style.display = 'block';
-            setTimeout(initMap, 300);
+            setTimeout(() => { initMap(); map.invalidateSize(); }, 300);
         } else {
-            alert("Wrong Password!");
+            alert("غلط پاسورڈ! (ڈیفالٹ پاسورڈ: admin123)");
         }
     }
 
-    function saveRecord() {
-        let record = {
-            ring: document.getElementById('ring_no').value,
-            owner: document.getElementById('owner_name').value,
-            club: document.getElementById('club_name').value,
-            year: document.getElementById('year').value,
-            distance: document.getElementById('distance_km').value,
-            time: document.getElementById('flying_time').value,
-            speed: parseFloat(document.getElementById('speed_mpm').value)
-        };
+    function logoutAdmin() {
+        isAdminLoggedIn = false;
+        sessionStorage.removeItem('bpra_admin_auth');
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-form').style.display = 'none';
+        document.getElementById('admin-pass').value = '';
+    }
 
-        if(!record.ring || !record.speed) {
-            alert("Please complete map location and time inputs!");
+    function saveRecord() {
+        let owner = document.getElementById('owner_name').value;
+        let dist = parseFloat(document.getElementById('distance_km').value);
+        let arrTime = document.getElementById('arrival_time').value;
+        let relTime = document.getElementById('release_time').value;
+        let year = document.getElementById('year').value;
+        let match = document.getElementById('match_name').value;
+        let speed = parseFloat(document.getElementById('preview_speed').value);
+
+        if(!owner || !dist || !arrTime || !speed) {
+            alert("براہ کرم تمام خانے اور میپ لوکیشن مکمل کریں!");
             return;
         }
 
-        db.push(record);
-        localStorage.setItem('bpra_records', JSON.stringify(db));
-        alert("Pigeon Record Saved Successfully!");
+        db.push({ owner, dist, arrTime, relTime, year, match, speed });
+        localStorage.setItem('bpra_records_v5', JSON.stringify(db));
+        alert("ریکارڈ کامیابی کے ساتھ محفوظ ہو گیا!");
         loadResults();
         switchTab('results');
     }
 
     function loadResults() {
+        let selYear = document.getElementById('filter-year').value;
+        let selMatch = document.getElementById('filter-match').value;
         let tbody = document.querySelector('#results-table tbody');
         tbody.innerHTML = '';
-        
-        // Sort by speed descending
-        db.sort((a, b) => b.speed - a.speed);
 
-        db.forEach((item, index) => {
-            let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-            let row = `<tr>
-                <td><span class="rank-badge ${rankClass}">${index + 1}</span></td>
-                <td><b>${item.ring}</b></td>
-                <td>${item.owner} (${item.club})</td>
-                <td>${item.distance} KM</td>
-                <td>${item.time}</td>
-                <td><b>${item.speed}</b> m/min</td>
+        let filtered = db.filter(item => item.year === selYear && item.match === selMatch);
+        filtered.sort((a, b) => b.speed - a.speed);
+
+        if(filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:15px; color:#777;">اس میچ کا کوئی ریکارڈ موجود نہیں ہے۔</td></tr>`;
+            return;
+        }
+
+        filtered.forEach((item, index) => {
+            let posClass = index < 10 ? 'pos-top' : '';
+            let posText = (index + 1);
+            if(index === 0) posText = '1ˢᵗ';
+            else if(index === 1) posText = '2ⁿᵈ';
+            else if(index === 2) posText = '3ʳᵈ';
+            else if(index < 10) posText = (index + 1) + 'ᵗʰ';
+
+            let row = `<tr class="${posClass}">
+                <td><b>${index + 1}</b></td>
+                <td style="text-align:left; padding-left:8px;"><b>${item.owner}</b></td>
+                <td>${item.arrTime}</td>
+                <td>${item.dist.toFixed(2)}</td>
+                <td><b>${item.speed.toFixed(3)}</b></td>
+                <td><b>${posText}</b></td>
             </tr>`;
             tbody.innerHTML += row;
         });
     }
 
-    // Initial Load
-    loadResults();
+    // PWA Install Prompt Logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('btn-install').style.display = 'inline-block';
+    });
+
+    function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    document.getElementById('btn-install').style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
 </script>
 </body>
-              </html>
-              
+</html>
