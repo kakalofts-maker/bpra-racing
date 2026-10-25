@@ -1,1 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPRA - Balochistan Racing Pigeon Association</title>
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #1a4a72;
+            --secondary: #2e8b57;
+            --accent: #d9534f;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 30px; }
+        
+        header { background: var(--primary); color: white; text-align: center; padding: 20px 15px; }
+        header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        header p { font-size: 0.9rem; opacity: 0.9; }
 
+        nav { background: #11324d; padding: 10px; text-align: center; }
+        nav button { background: none; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 0 5px; }
+        nav button.active { background: white; color: var(--primary); font-weight: bold; }
+
+        .container { max-width: 900px; margin: 15px auto; padding: 0 10px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .card h2 { color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--bg); padding-bottom: 8px; margin-bottom: 12px; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.9rem; }
+        
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+
+        button.btn-main { background: var(--secondary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        button.btn-main:hover { opacity: 0.9; }
+
+        #map { height: 250px; border-radius: 5px; margin-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table th { background-color: var(--primary); color: white; }
+        table tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .rank-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-weight: bold; color: white; }
+        .rank-1 { background-color: #ffd700; color: #000; }
+        .rank-2 { background-color: #c0c0c0; color: #000; }
+        .rank-3 { background-color: #cd7f32; color: #fff; }
+
+        @media print {
+            nav, .admin-only, .btn-print-hide { display: none !important; }
+            body { background: white; }
+            .card { box-shadow: none; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Balochistan Racing Pigeon Association (BPRA)</h1>
+    <p>Mach Bolan, Balochistan, Pakistan</p>
+</header>
+
+<nav>
+    <button id="btn-results" class="active" onclick="switchTab('results')">Tournament Results</button>
+    <button id="btn-admin" onclick="switchTab('admin')">Admin Panel</button>
+</nav>
+
+<div class="container">
+
+    <!-- PUBLIC RESULTS TAB -->
+    <div id="tab-results" class="card">
+        <h2>🏆 Tournament Results</h2>
+        <div class="row">
+            <div class="form-group">
+                <label>Select Tournament Year:</label>
+                <select id="filter-year" onchange="loadResults()"><option value="2026">2026</option></select>
+            </div>
+            <div class="form-group">
+                <label>Select Match:</label>
+                <select id="filter-match" onchange="loadResults()"><option value="Match 1">Match 1</option></select>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 10px; text-align: right;" class="btn-print-hide">
+            <button onclick="window.print()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">🖨️ Print Results / Save PDF</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Ring No</th>
+                        <th>Owner & Club</th>
+                        <th>Distance</th>
+                        <th>Flying Time</th>
+                        <th>Speed (m/min)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic Data -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL TAB -->
+    <div id="tab-admin" class="card" style="display: none;">
+        <h2>🔒 Admin Entry Panel</h2>
+        
+        <!-- Login Form -->
+        <div id="admin-login">
+            <div class="form-group">
+                <label>Admin Password:</label>
+                <input type="password" id="admin-pass" placeholder="Enter Admin Password (Default: admin123)">
+            </div>
+            <button class="btn-main" onclick="loginAdmin()">Login</button>
+        </div>
+
+        <!-- Add Record Form (Hidden by default) -->
+        <div id="admin-form" style="display: none;">
+            <h3>Add New Pigeon Record</h3>
+            <br>
+            <div class="row">
+                <div class="form-group">
+                    <label>Ring Number:</label>
+                    <input type="text" id="ring_no" required>
+                </div>
+                <div class="form-group">
+                    <label>Owner Name:</label>
+                    <input type="text" id="owner_name" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Club Name:</label>
+                    <input type="text" id="club_name" value="BPRA Mach Bolan">
+                </div>
+                <div class="form-group">
+                    <label>Tournament Year:</label>
+                    <input type="number" id="year" value="2026">
+                </div>
+            </div>
+
+            <!-- Map GPS Section -->
+            <div class="form-group">
+                <label>GPS Distance Calculation (Select Locations on Map):</label>
+                <div id="map"></div>
+                <div class="row">
+                    <input type="text" id="release_loc" placeholder="Release Point" readonly>
+                    <input type="text" id="arrival_loc" placeholder="Arrival Point" readonly>
+                </div>
+                <br>
+                <input type="number" id="distance_km" placeholder="Distance in KM (Auto-calculated)" step="0.01" readonly style="font-weight: bold; background: #eef;">
+            </div>
+
+            <!-- Flying Time Section -->
+            <div class="row">
+                <div class="form-group">
+                    <label>Release Time (HH:MM:SS):</label>
+                    <input type="time" id="release_time" step="1" onchange="calculateSpeed()">
+                </div>
+                <div class="form-group">
+                    <label>Arrival Time (HH:MM:SS):</label>
+                    <input type="time" id="arrival_time" step="1" onchange="calculateSpeed()">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Total Flying Time:</label>
+                    <input type="text" id="flying_time" placeholder="Auto-calculated" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Speed (Meter / Min):</label>
+                    <input type="text" id="speed_mpm" placeholder="Auto-calculated" readonly style="font-weight: bold; color: var(--secondary);">
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="saveRecord()">Save Pigeon Record</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let db = JSON.parse(localStorage.getItem('bpra_records')) || [];
+    let map, relMarker, arrMarker;
+    let relCoords = null, arrCoords = null;
+
+    function initMap() {
+        // Default Center: Mach, Bolan, Balochistan
+        map = L.map('map').setView([29.8637, 67.3323], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        map.on('click', function(e) {
+            if (!relCoords) {
+                relCoords = e.latlng;
+                relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(4)}, ${relCoords.lng.toFixed(4)}`;
+            } else if (!arrCoords) {
+                arrCoords = e.latlng;
+                arrMarker = L.marker(arrCoords).addTo(map).bindPopup("Arrival Point").openPopup();
+                document.getElementById('arrival_loc').value = `${arrCoords.lat.toFixed(4)}, ${arrCoords.lng.toFixed(4)}`;
+                calcDistance();
+            } else {
+                map.removeLayer(relMarker);
+                map.removeLayer(arrMarker);
+                relCoords = e.latlng;
+                arrCoords = null;
+                relMarker = L.marker(relCoords).addTo(map).bindPopup("Release Point").openPopup();
+                document.getElementById('release_loc').value = `${relCoords.lat.toFixed(4)}, ${relCoords.lng.toFixed(4)}`;
+                document.getElementById('arrival_loc').value = "";
+                document.getElementById('distance_km').value = "";
+            }
+        });
+    }
+
+    function calcDistance() {
+        if (relCoords && arrCoords) {
+            let R = 6371; // Radius of Earth in KM
+            let dLat = (arrCoords.lat - relCoords.lat) * Math.PI / 180;
+            let dLon = (arrCoords.lng - relCoords.lng) * Math.PI / 180;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(relCoords.lat * Math.PI / 180) * Math.cos(arrCoords.lat * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            let d = R * c;
+            document.getElementById('distance_km').value = d.toFixed(2);
+            calculateSpeed();
+        }
+    }
+
+    function calculateSpeed() {
+        let rel = document.getElementById('release_time').value;
+        let arr = document.getElementById('arrival_time').value;
+        let dist = parseFloat(document.getElementById('distance_km').value);
+
+        if (rel && arr && dist) {
+            let t1 = new Date("1970-01-01T" + rel + "Z");
+            let t2 = new Date("1970-01-01T" + arr + "Z");
+            let diffMs = t2 - t1;
+            
+            if (diffMs < 0) diffMs += 24 * 3600 * 1000; // Overday flight
+
+            let totalMinutes = diffMs / (1000 * 60);
+            let hours = Math.floor(totalMinutes / 60);
+            let minutes = Math.floor(totalMinutes % 60);
+            let seconds = Math.floor((diffMs / 1000) % 60);
+
+            document.getElementById('flying_time').value = `${hours}h ${minutes}m ${seconds}s`;
+
+            // Speed in Meters per Minute
+            let speedMpm = (dist * 1000) / totalMinutes;
+            document.getElementById('speed_mpm').value = speedMpm.toFixed(2);
+        }
+    }
+
+    function switchTab(tab) {
+        document.getElementById('tab-results').style.display = tab === 'results' ? 'block' : 'none';
+        document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+        document.getElementById('btn-results').className = tab === 'results' ? 'active' : '';
+        document.getElementById('btn-admin').className = tab === 'admin' ? 'active' : '';
+        if(tab === 'admin' && !map) setTimeout(initMap, 300);
+    }
+
+    function loginAdmin() {
+        let pass = document.getElementById('admin-pass').value;
+        if(pass === "admin123") {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-form').style.display = 'block';
+            setTimeout(initMap, 300);
+        } else {
+            alert("Wrong Password!");
+        }
+    }
+
+    function saveRecord() {
+        let record = {
+            ring: document.getElementById('ring_no').value,
+            owner: document.getElementById('owner_name').value,
+            club: document.getElementById('club_name').value,
+            year: document.getElementById('year').value,
+            distance: document.getElementById('distance_km').value,
+            time: document.getElementById('flying_time').value,
+            speed: parseFloat(document.getElementById('speed_mpm').value)
+        };
+
+        if(!record.ring || !record.speed) {
+            alert("Please complete map location and time inputs!");
+            return;
+        }
+
+        db.push(record);
+        localStorage.setItem('bpra_records', JSON.stringify(db));
+        alert("Pigeon Record Saved Successfully!");
+        loadResults();
+        switchTab('results');
+    }
+
+    function loadResults() {
+        let tbody = document.querySelector('#results-table tbody');
+        tbody.innerHTML = '';
+        
+        // Sort by speed descending
+        db.sort((a, b) => b.speed - a.speed);
+
+        db.forEach((item, index) => {
+            let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+            let row = `<tr>
+                <td><span class="rank-badge ${rankClass}">${index + 1}</span></td>
+                <td><b>${item.ring}</b></td>
+                <td>${item.owner} (${item.club})</td>
+                <td>${item.distance} KM</td>
+                <td>${item.time}</td>
+                <td><b>${item.speed}</b> m/min</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // Initial Load
+    loadResults();
+</script>
+</body>
+              </html>
+              
